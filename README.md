@@ -55,9 +55,11 @@ and need Nexus IPC, so inside the container the host builds from Vitruvian's
 
 ## GitHub Actions
 
-`.github/workflows/build-deb.yml` builds the deb on every push and pull
-request, uploads it as the `vos-bepdf-deb` artifact, and attaches it to the
-release when a `v*` tag is pushed:
+`.github/workflows/build-deb.yml` builds the deb for **amd64** and **arm64**
+(one native runner each: `ubuntu-latest` and `ubuntu-24.04-arm`) on every push
+and pull request, uploads them as the `vos-bepdf-deb-amd64` and
+`vos-bepdf-deb-arm64` artifacts, and, when a `v*` tag is pushed, publishes one
+release with both debs once both builds have succeeded:
 
 ```sh
 git tag v2.1.4 && git push origin v2.1.4
@@ -72,7 +74,7 @@ The job runs in `debian:trixie`:
 2. unpacks them with `ci/setup-sdk.sh` (the same script the Dockerfile uses; no
    `postinst` runs);
 3. builds `rc`, `xres`, `resattr` and `linkcatkeys` from a shallow clone of
-   VitruvianOS/Vitruvian (`cmake -DBUILDTOOLS_MODE=1`, cached);
+   VitruvianOS/Vitruvian (`cmake -DBUILDTOOLS_MODE=1`, cached per architecture);
 4. `cmake`, `ninja`, `ninja package`.
 
 The suite and the Vitruvian ref are `workflow_dispatch` inputs, or the

@@ -15,7 +15,7 @@ on:
         default: master
 
 permissions:
-  contents: write   # attach the deb to a release
+  contents: write   # attach the debs to a release
 
 env:
   VOS_REPO_URL: https://repo.v-os.dev
@@ -26,7 +26,18 @@ env:
 
 jobs:
   deb:
-    runs-on: ubuntu-latest
+    name: deb (${{ matrix.arch }})
+    # One native runner per architecture: nothing is cross-compiled or
+    # emulated, and the host tools (rc, xres, ...) are built for the runner.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     container: debian:trixie
     steps:
       - name: Base tools
@@ -38,7 +49,8 @@ jobs:
       - uses: actions/checkout@v4
 
       # vos, vos-dev and vos-data from the V\OS apt repository: the SDK that
-      # is actually published, not a local build.
+      # is actually published, not a local build. apt picks this runner's
+      # architecture.
       - name: Download the V\OS SDK packages
         run: ci/fetch-sdk-apt.sh "$VOS_REPO_SUITE" "$RUNNER_TEMP/vos-debs"
 
@@ -50,8 +62,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/vos-tools
-          key: vos-host-tools-${{ env.VITRUVIAN_REF }}-${{ github.run_id }}
-          restore-keys: vos-host-tools-${{ env.VITRUVIAN_REF }}-
+          key: vos-host-tools-${{ matrix.arch }}-${{ env.VITRUVIAN_REF }}-${{ github.run_id }}
+          restore-keys: vos-host-tools-${{ matrix.arch }}-${{ env.VITRUVIAN_REF }}-
 
       - name: Build the host tools (rc, xres, resattr, linkcatkeys)
         run: |
@@ -86,15 +98,33 @@ jobs:
           deb=$(ls build/vos-bepdf_*.deb)
           dpkg-deb -I "$deb"
           dpkg-deb -c "$deb" | head -20
+          # The package must carry the architecture of the runner it was
+          # built on, so the two debs cannot overwrite each other.
+          [ "$(dpkg-deb -f "$deb" Architecture)" = "${{ matrix.arch }}" ]
 
       - uses: actions/upload-artifact@v4
         with:
-          name: vos-bepdf-deb
+          name: vos-bepdf-deb-${{ matrix.arch }}
           path: build/vos-bepdf_*.deb
           if-no-files-found: error
 
+  # One release for all architectures, created once both debs exist. If one
+  # architecture fails the release is not published half-empty.
+  release:
+    needs: deb
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: vos-bepdf-deb-*
+          merge-multiple: true
+          path: debs
+
+      - name: List the debs
+        run: ls -la debs
+
       - name: Attach to the release
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/vos-bepdf_*.deb
+          files: debs/vos-bepdf_*.deb
