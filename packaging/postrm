@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    remove|purge)
+        rm -f /system/data/deskbar/menu/Applications/BePDF
+        ;;
+esac
+
+exit 0

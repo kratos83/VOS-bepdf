@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = configure ]; then
+    # Show up in the Deskbar Applications menu.
+    mkdir -p /system/data/deskbar/menu/Applications
+    ln -sf /system/apps/BePDF /system/data/deskbar/menu/Applications/BePDF
+
+    # dpkg does not carry xattrs: restore the BeOS attributes (signature,
+    # supported types, icon) onto the installed binary.
+    if [ -f /usr/share/vos-bepdf/attrs.tar ]; then
+        _tmp=$(mktemp -d)
+        tar --xattrs -xf /usr/share/vos-bepdf/attrs.tar -C "$_tmp"
+        find "$_tmp" -type f | while IFS= read -r _src; do
+            _dst="/${_src#$_tmp/}"
+            [ -f "$_dst" ] || continue
+            getfattr -d -m user.beos -e hex "$_src" 2>/dev/null \
+                | sed "s|${_src#/}|${_dst#/}|g" \
+                | setfattr --restore - 2>/dev/null || true
+        done
+        rm -rf "$_tmp"
+    fi
+fi
+
+exit 0

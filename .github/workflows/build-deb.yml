@@ -1,0 +1,100 @@
+name: Build deb
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      vos_suite:
+        description: V\OS apt suite to take the SDK from
+        default: trixie-nightly
+      vitruvian_ref:
+        description: Vitruvian ref to build the host tools from
+        default: master
+
+permissions:
+  contents: write   # attach the deb to a release
+
+env:
+  VOS_REPO_URL: https://repo.v-os.dev
+  # Fingerprint Vitruvian's own CI pins; the key is refused if it differs.
+  VOS_REPO_KEY_FPR: 8276B9B78A0853D17CB0CB0E9B50324D1D38BE53
+  VOS_REPO_SUITE: ${{ inputs.vos_suite || vars.VOS_REPO_SUITE || 'trixie-nightly' }}
+  VITRUVIAN_REF: ${{ inputs.vitruvian_ref || vars.VITRUVIAN_REF || 'master' }}
+
+jobs:
+  deb:
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - name: Base tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates curl git gnupg
+
+      - uses: actions/checkout@v4
+
+      # vos, vos-dev and vos-data from the V\OS apt repository: the SDK that
+      # is actually published, not a local build.
+      - name: Download the V\OS SDK packages
+        run: ci/fetch-sdk-apt.sh "$VOS_REPO_SUITE" "$RUNNER_TEMP/vos-debs"
+
+      - name: Set up the SDK
+        run: ci/setup-sdk.sh "$RUNNER_TEMP/vos-debs"
+
+      - name: Cache the host tools
+        id: tools-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/vos-tools
+          key: vos-host-tools-${{ env.VITRUVIAN_REF }}-${{ github.run_id }}
+          restore-keys: vos-host-tools-${{ env.VITRUVIAN_REF }}-
+
+      - name: Build the host tools (rc, xres, resattr, linkcatkeys)
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/vos-tools"
+          if [ -x "$tools/rc" ] && [ -x "$tools/linkcatkeys" ]; then
+            echo "using cached host tools"
+          else
+            apt-get install -y --no-install-recommends \
+              bison flex libfl-dev git
+            git clone --depth 1 --branch "$VITRUVIAN_REF" \
+              https://github.com/VitruvianOS/Vitruvian.git "$RUNNER_TEMP/vitruvian"
+            mkdir "$RUNNER_TEMP/vitruvian/buildtools"
+            cd "$RUNNER_TEMP/vitruvian/buildtools"
+            cmake -DBUILDTOOLS_MODE=1 .. -GNinja
+            ninja
+            mkdir -p "$tools"
+            cp src/bin/rc/rc src/bin/xres src/bin/resattr \
+               src/tools/locale/linkcatkeys "$tools/"
+          fi
+          # Ahead of the V\OS ones in /bin, which need Nexus IPC.
+          install -m 755 "$tools"/* /usr/local/bin/
+
+      - name: Build
+        run: |
+          cmake -S . -B build -G Ninja
+          ninja -C build
+          ninja -C build package
+
+      - name: Package info
+        run: |
+          deb=$(ls build/vos-bepdf_*.deb)
+          dpkg-deb -I "$deb"
+          dpkg-deb -c "$deb" | head -20
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vos-bepdf-deb
+          path: build/vos-bepdf_*.deb
+          if-no-files-found: error
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/vos-bepdf_*.deb
