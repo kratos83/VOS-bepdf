@@ -20,7 +20,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#if defined(__BEOS__) || defined(__HAIKU__)
+#if defined(__BEOS__) || defined(__HAIKU__) || defined(__VOS__)
 #include "BepdfApplication.h"
 #include "AnnotationRenderer.h"
 #include <Bitmap.h>
@@ -286,7 +286,7 @@ AnnotAppearance::~AnnotAppearance()
 // Annotation visitor implementation
 void AnnotAppearance::DoText(TextAnnot* a)
 {
-#if defined(__BEOS__) || defined(__HAIKU__)
+#if defined(__BEOS__) || defined(__HAIKU__) || defined(__VOS__)
 	Init(a);
 	BBitmap* src = gApp->GetTextAnnotImage((int)a->GetType());
 	rgb_color c = AnnotationRenderer::GetColor(a->GetColor());

@@ -78,7 +78,7 @@ static struct {
   const char *obliqueFont;	// name of font to oblique
   double obliqueFactor;		// oblique sheer factor
 } displayFontTab[] = {
-#if defined(__BEOS__) || defined(__HAIKU__)
+#if defined(__BEOS__) || defined(__HAIKU__) || defined(__VOS__)
   {"Courier",               "NimbusMonL-Regu", "cour.ttf",    "Courier",      "Courier",                NULL,             0},
   {"Courier-Bold",          "NimbusMonL-Bold", "courbd.ttf",  "Courier",      "Courier Bold",           NULL,             0},
   {"Courier-BoldOblique",   "NimbusMonL-BoldObli", "courbi.ttf",  "Courier",      "Courier Bold Oblique",   "Courier-Bold",   0.212557},
