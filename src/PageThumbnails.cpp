@@ -1,6 +1,11 @@
 /*
  * BePDF: The PDF reader for Haiku.
+<<<<<<< HEAD
  * 	 Copyright (C) 2026	Angelo Scarnà
+=======
+ *
+ * 	 Copyright (C) 2026 Angelo Scarnà
+>>>>>>> 587d5b1cc7a3b9bd3d7d92fd9baf80d2517aa5a3
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
