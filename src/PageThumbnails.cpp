@@ -1,8 +1,6 @@
 /*
  * BePDF: The PDF reader for Haiku.
- * 	 Copyright (C) 1997 Benoit Triquet.
- * 	 Copyright (C) 1998-2000 Hubert Figuiere.
- * 	 Copyright (C) 2000-2002 Michael Pfeiffer.
+ * 	 Copyright (C) 2026	Angelo Scarnà
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
