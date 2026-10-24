@@ -1,5 +1,5 @@
 /*  
- * BePDF: The PDF reader for Haiku.
+ * BePDF: The PDF reader for VOS.
  * 	 Copyright (C) 1997 Benoit Triquet.
  * 	 Copyright (C) 1998-2000 Hubert Figuiere.
  * 	 Copyright (C) 2000-2011 Michael Pfeiffer.

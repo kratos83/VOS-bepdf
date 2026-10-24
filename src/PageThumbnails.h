@@ -1,5 +1,5 @@
 /*
- * BePDF: The PDF reader for Haiku.
+ * BePDF: The PDF reader for VOS.
  * 	 Copyright (C) 2026 Angelo Scarnà
  *
  * This program is free software; you can redistribute it and/or modify
