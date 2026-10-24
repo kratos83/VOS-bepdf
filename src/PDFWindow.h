@@ -37,6 +37,7 @@
 #include "EntryChangedMonitor.h"
 #include "FindTextWindow.h"
 #include "PDFView.h"
+#include "PageThumbnails.h"
 #include "ToolTip.h"
 
 // xpdf
@@ -144,6 +145,7 @@ public:
 		HISTORY_BACK_CMD,
 		HISTORY_FORWARD_CMD,
 		PAGE_SELECTED_CMD,
+		LOCALE_CHANGED_MSG,
 
 		// Rotation
 		SET_ROTATE_VALUE_CMD,
@@ -223,6 +225,7 @@ private:
 	BView*			fMainContainer;
 	BCardView*		mLayerView;
 	BListView      *mPagesView;
+	PageThumbnailRenderer mThumbnails;
 	OutlinesView   *mOutlinesView;
 	BToolBar*		mAnnotationBar;
 	AttachmentView *mAttachmentView;
@@ -320,6 +323,8 @@ public:
 
 	void FillPageList();
 	void UpdatePageList();
+	void StartThumbnails();
+	void RebuildLocalizedUI();
 	void HandlePendingActions(bool ok);
 
 	void EditAnnotation(bool edit);

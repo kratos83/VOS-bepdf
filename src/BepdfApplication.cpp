@@ -24,6 +24,7 @@
 #include <ctype.h>
 
 #include <Catalog.h>
+#include <LocaleRoster.h>
 #include <Application.h>
 #include <FilePanel.h>
 #include <Roster.h>
@@ -631,6 +632,17 @@ BepdfApplication::MessageReceived (BMessage * msg)
 			mWindow->Lock();
 			mWindow->UpdateWindowsMenu();
 			mWindow->Unlock();
+		}
+		break;
+	case B_LOCALE_CHANGED:
+		// the language was changed in the Locale preferences: reload the
+		// catalog and let the windows rebuild their menus and toolbars
+		BLocaleRoster::Default()->Refresh();
+		B_CATALOG->SetTo("x-vnd.mp-xpdf");
+		for (int32 i = 0; i < CountWindows(); i++) {
+			PDFWindow* window = dynamic_cast<PDFWindow*>(WindowAt(i));
+			if (window != NULL)
+				window->PostMessage(PDFWindow::LOCALE_CHANGED_MSG);
 		}
 		break;
 	case B_CANCEL:

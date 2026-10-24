@@ -187,6 +187,7 @@ PDFWindow::PDFWindow(entry_ref* ref, BRect frame, const char *ownerPassword,
 ///////////////////////////////////////////////////////////
 PDFWindow::~PDFWindow()
 {
+	mThumbnails.Stop();
 	RemoveHandler(&mEntryChangedMonitor);
 
 	DeleteAnnotTemplates();
@@ -241,8 +242,8 @@ void PDFWindow::FillPageList() {
 	BList list;
 	for (int32 i = 0; i < mMainView->GetNumPages(); i++) {
 		char pageNo[20];
-		sprintf(pageNo, "%5.0d", (int)(i+1));
-		list.AddItem(new BStringItem(pageNo));
+		sprintf(pageNo, "%d", (int)(i+1));
+		list.AddItem(new PageThumbnailItem(pageNo));
 	}
 
 	MakeEmpty(mPagesView);
@@ -268,6 +269,40 @@ void PDFWindow::UpdatePageList() {
 		mMainView->GetPDFDoc());
 
 	gPdfLock->Unlock();
+
+	StartThumbnails();
+}
+
+// rebuild menu bar and toolbar with the strings of the current language
+void PDFWindow::RebuildLocalizedUI() {
+	BGroupLayout* root = dynamic_cast<BGroupLayout*>(GetLayout());
+	if (root == NULL || fMenuBar == NULL || mToolBar == NULL)
+		return;
+
+	int16 zoom = gApp->GetSettings()->GetZoom();
+	float rotation = gApp->GetSettings()->GetRotation();
+
+	fMenuBar->RemoveSelf();
+	delete fMenuBar;
+	mToolBar->RemoveSelf();
+	delete mToolBar;
+
+	fMenuBar = BuildMenu();
+	BuildToolBar();
+	root->AddView(0, fMenuBar);
+	root->AddView(1, mToolBar);
+
+	SetTotalPageNumber(mMainView->GetNumPages());
+	char pageStr[64];
+	snprintf(pageStr, sizeof(pageStr), "%d", mMainView->Page());
+	mPageNumberItem->SetText(pageStr);
+	SetZoom(zoom);
+	SetRotation(rotation);
+	UpdateInputEnabler();
+}
+
+void PDFWindow::StartThumbnails() {
+	mThumbnails.Start(mMainView->GetPDFDoc(), BMessenger(this));
 }
 
 bool PDFWindow::SetPendingIfLocked(uint32 mask) {
@@ -1080,6 +1115,24 @@ PDFWindow::MessageReceived(BMessage* message)
 				/* ERROR */
 			}
 		}
+		break;
+	case PageThumbnailRenderer::THUMBNAIL_MSG: {
+			int32 index;
+			BBitmap* bitmap;
+			if (message->FindInt32("index", &index) == B_OK
+				&& message->FindPointer("bitmap", (void**)&bitmap) == B_OK) {
+				PageThumbnailItem* item = dynamic_cast<PageThumbnailItem*>(
+					mPagesView->ItemAt(index));
+				if (item != NULL) {
+					item->SetThumbnail(bitmap);
+					mPagesView->InvalidateItem(index);
+				} else
+					delete bitmap;
+			}
+		}
+		break;
+	case LOCALE_CHANGED_MSG:
+		RebuildLocalizedUI();
 		break;
 	case PAGE_SELECTED_CMD:
 		page = mPagesView->CurrentSelection(0) + 1;

@@ -25,6 +25,7 @@ set(_sources
 	PageCache.cpp
 	PageLabels.cpp
 	PageRenderer.cpp
+	PageThumbnails.cpp
 	PasswordWindow.cpp
 	PreferencesWindow.cpp
 	PrintSettingsWindow.cpp

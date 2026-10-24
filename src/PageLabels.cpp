@@ -23,6 +23,7 @@
 #include "PageLabels.h"
 #include "LayoutUtils.h"
 #include "TextConversion.h"
+#include "PageThumbnails.h"
 
 const char *PageLabel::d[3][10] = {
 	{ "", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX" },
@@ -164,7 +165,7 @@ bool PageLabels::NewPageLabel(PageLabel *label, int max) {
 	if (old) {
 		BString s;
 		for (int i = old->GetPage(); i <= max; i++) {
-			list.AddItem(new BStringItem(old->GetLabel(i, max, s)));
+			list.AddItem(new PageThumbnailItem(old->GetLabel(i, max, s)));
 		}
 		delete old;
 	}
