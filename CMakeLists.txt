@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(BePDF VERSION 2.1.4 LANGUAGES C CXX)
+project(BePDF VERSION 2.1.5 LANGUAGES C CXX)
 
 # BePDF for V\OS, built outside the Vitruvian tree against an installed
 # vos-dev. Needs: vos-dev (headers, vos.pc), the vos runtime tools
