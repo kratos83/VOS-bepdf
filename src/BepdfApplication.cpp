@@ -151,9 +151,21 @@ void BepdfApplication::FreeImages(BBitmap* images[], int num) {
 }
 
 ///////////////////////////////////////////////////////////
+// Load the catalog by signature from the standard locale directories.
+// The automatic lookup of B_TRANSLATE goes through the executable's
+// attributes and image info; when that fails every string stays English.
+static void LoadAppCatalog()
+{
+	BCatalog* catalog = B_CATALOG;
+		// first use runs the automatic lookup once; override its result
+	catalog->SetTo("x-vnd.mp-xpdf");
+}
+
+
 BepdfApplication::BepdfApplication()
 		: BApplication ( BEPDF_APP_SIG )
 {
+	LoadAppCatalog();
 	mSettings = new GlobalSettings();
 	mOpenFilePanel            = NULL;
 	mSaveFilePanel            = NULL;
@@ -638,7 +650,7 @@ BepdfApplication::MessageReceived (BMessage * msg)
 		// the language was changed in the Locale preferences: reload the
 		// catalog and let the windows rebuild their menus and toolbars
 		BLocaleRoster::Default()->Refresh();
-		B_CATALOG->SetTo("x-vnd.mp-xpdf");
+		LoadAppCatalog();
 		for (int32 i = 0; i < CountWindows(); i++) {
 			PDFWindow* window = dynamic_cast<PDFWindow*>(WindowAt(i));
 			if (window != NULL)
