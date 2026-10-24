@@ -904,7 +904,8 @@ void PDFWindow::SetUpViews(entry_ref* ref,
     GlobalSettings *s = gApp->GetSettings();
 
 	// show or hide panel that is stored in settings
-	ShowLeftPanel(s->GetLeftPanel());
+	// always open with the page thumbnails, not the bookmarks
+	ShowLeftPanel(PAGE_LIST_PANEL);
 	if (!s->GetShowLeftPanel()) {
 		// hide panel
 		ToggleLeftPanel();
